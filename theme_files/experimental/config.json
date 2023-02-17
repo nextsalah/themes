@@ -1,0 +1,11 @@
+{
+    "name": "Experimental Theme",
+    "description": "test theme",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Ismail Sacic",
+            "github_profile": "https://github.com/ismail424"
+        }
+    ]
+}
