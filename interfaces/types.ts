@@ -4,9 +4,9 @@ export type ParseResult<T> =
 | { parsed: T; hasError: false; error?: undefined }
 | { parsed?: undefined; hasError: true; error?: unknown }
 
-export type customSettingsType = { [key: string]:   string | number | boolean | null | undefined }
+export type customTemplatesType = { [key: string]:   string | number | boolean | null | undefined }
 
-export function iscustomSettingsType(o: any): o is customSettingsType {
+export function iscustomTemplatesType(o: any): o is customTemplatesType {
   if (typeof o !== 'object') return false
   if (o === null) return false
   return true
@@ -35,9 +35,10 @@ export function isconfigType(o: any): o is configType {
   return true
 }
 
-export type settingsType = IField[];
+export type templatesType = IField[];
+export type defaultTemplatesType = { [key: string]: string | number | boolean | null | undefined };
 
-export function isSettingsType(o: any): o is settingsType {
+export function isTemplatesType(o: any): o is templatesType {
   if (!Array.isArray(o)) return false
   if (o.length === 0) return false
   for (const input of o) {

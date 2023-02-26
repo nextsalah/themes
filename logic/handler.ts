@@ -1,4 +1,4 @@
-import { isSettingsType, iscustomSettingsType, isconfigType } from '../interfaces/types';
+import { isTemplatesType, iscustomTemplatesType, isconfigType } from '../interfaces/types';
 import type * as types from '../interfaces/types';
 import fs from 'fs';
 import path from 'path';
@@ -6,30 +6,46 @@ import path from 'path';
 class Theme {
 	folderName: string;
 	config: types.configType;
-	themeSettings: types.settingsType;
+	themeTemplates: types.templatesType;
 
 	private constructor(
 		themeFolderName: string,
 		config: types.configType,
-		themeSettings: types.settingsType,
+		themeTemplates: types.templatesType,
 	) {
 		this.folderName = themeFolderName;
 		this.config = config;
-		this.themeSettings = themeSettings;
+		this.themeTemplates = themeTemplates;
 	}
 
 	get folderPath() {
 		return path.resolve(path.join('themes', 'theme_files', this.folderName));
 	}
 
-	parseCustomSettings(customSettingsInput: string) : types.customSettingsType | Error {
-		const customSettings = Theme.safeJsonParse(iscustomSettingsType)(customSettingsInput);
+	parseCustomTemplates(customTemplatesInput: string) : types.customTemplatesType | Error {
+		/**
+		 * It takes a string and parses it into a customTemplatesType.
+		 * @param {string} customTemplatesInput - string - The string that you want to parse.
+		 * @returns A function that takes a string and returns either a customTemplatesType or an Error.
+		 */
+		const customTemplates = Theme.safeJsonParse(iscustomTemplatesType)(customTemplatesInput);
 
-		if (customSettings.hasError) {
-			return new Error('Failed to parse custom settings');
+		if (customTemplates.hasError) {
+			return new Error('Failed to parse custom templates');
 		}
-		return customSettings.parsed;
+		return customTemplates.parsed;
 	}
+
+	get getDefault(): types.defaultTemplatesType {
+		let defaultTemplates: types.defaultTemplatesType = {};
+		for (const setting of this.themeTemplates) {
+			if (setting.value == null){ continue;}
+			defaultTemplates[setting.name] = setting.value;
+		}
+		return defaultTemplates;
+	};
+
+
 	static safeJsonParse =
 		<T>(guard: (o: any) => o is T) =>
 		(text: string): types.ParseResult<T> => {
@@ -57,13 +73,12 @@ class Theme {
 		}
 		return Theme.safeJsonParse(isconfigType)(config);
 	}
-	static getSettings(folder_name: string): types.ParseResult<types.settingsType>{
-		// TODO: add guard
-		const settings = Theme.readFile(folder_name, 'settings.json');
-		if (settings instanceof Error) {
-			return { hasError: true, error: settings.message }  as types.ParseResult<any>;
+	static getTemplate(folder_name: string): types.ParseResult<types.templatesType>{
+		const templates = Theme.readFile(folder_name, 'template.json');
+		if (templates instanceof Error) {
+			return { hasError: true, error: templates.message }  as types.ParseResult<any>;
 		}
-		return Theme.safeJsonParse(isSettingsType)(settings);
+		return Theme.safeJsonParse(isTemplatesType)(templates);
 	}
 
 	static async getAllAvailableThemes(): Promise<string[]> {
@@ -85,6 +100,7 @@ class Theme {
 		return allThemes;
 	}
 
+
 	static async isValidTheme(themeFolderName: string): Promise<boolean> {
 		const availableThemes = await Theme.getAllAvailableThemes();
 		return availableThemes.includes(themeFolderName);
@@ -98,17 +114,17 @@ class Theme {
 		}
 
 		const config = this.getConfig(themeFolderName);
-		const themeSettings = this.getSettings(themeFolderName);
+		const themeTemplates = this.getTemplate(themeFolderName);
 
 		if (config.hasError) {
 			return new Error(config.error as string || 'Failed to parse theme config');
 		}
 
-		if (themeSettings.hasError) {
-			return new Error( themeSettings.error as string || 'Failed to parse theme settings');
+		if (themeTemplates.hasError) {
+			return new Error( themeTemplates.error as string || 'Failed to parse theme templates');
 		}
 
-		return new Theme(themeFolderName, config.parsed, themeSettings.parsed);
+		return new Theme(themeFolderName, config.parsed, themeTemplates.parsed);
 	}
 }
 
